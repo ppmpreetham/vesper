@@ -5,8 +5,10 @@ import (
 	"fmt"
 	"os"
 
+	"sync"
+
 	"github.com/fatih/color"
-	// "github.com/ppmpreetham/vesper/sites"
+	"github.com/ppmpreetham/vesper/sites"
 )
 
 func main() {
@@ -41,11 +43,8 @@ func main() {
 		os.Exit(1)
 	}
 
-	username := flag.Arg(0)
-	fmt.Println(success("Checking availability for username:"), bold(username))
-
 	// Optional: simulate using the flags
-	fmt.Println(info("Vesper Server is starting..."))
+	fmt.Println(info("Vesper is starting..."))
 	fmt.Printf("%s Timeout: %d seconds\n", info("-"), *timeout)
 	fmt.Printf("%s Threads: %d\n", info("-"), *threads)
 	fmt.Printf("%s Rate Limit: %d second(s)\n", info("-"), *rateLimit)
@@ -53,6 +52,29 @@ func main() {
 	if *verbose {
 		fmt.Println(warning("Verbose mode is enabled."))
 	}
+
+	username := flag.Arg(0)
+	fmt.Println(success("Checking availability for username:"), bold(username))
+
+	var wg sync.WaitGroup
+
+	for _, site := range sites.DefaultSites {
+		wg.Add(1)
+		go func(site sites.Site) {
+			defer wg.Done()
+			found, url, err := sites.CheckUsername(site, username)
+			if err != nil {
+				fmt.Printf("%s %s: error: %v\n", warning("!"), site.Name, err)
+				return
+			}
+			if found {
+				fmt.Printf("%s %s: %s -> %s\n", success("+"), site.Name, success("FOUND"), url)
+			} else {
+				fmt.Printf("%s %s: %s\n", errorMsg("-"), site.Name, warning("NOT FOUND"))
+			}
+		}(site)
+	}
+	wg.Wait()
 
 	fmt.Println("Work done.")
 }
