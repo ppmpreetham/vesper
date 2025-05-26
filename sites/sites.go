@@ -13,7 +13,7 @@ var DefaultSites = []Site{
 	},
 	{
 		Name:          "GitHub",
-		UrlTemplate:   "https://githib.com/%s",
+		UrlTemplate:   "https://github.com/%s",
 		UsernameRegex: `^[A-Za-z0-9][A-Za-z0-9-]{0,38}$`,
 		ErrorMsg:      "This account doesn't exist",
 		Method:        "GET",
