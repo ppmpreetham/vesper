@@ -56,6 +56,9 @@ func main() {
 	username := flag.Arg(0)
 	fmt.Println(success("Checking availability for username:"), bold(username))
 
+	// Set global timeout for all sites
+	sites.GlobalTimeoutSeconds = *timeout
+
 	var wg sync.WaitGroup
 
 	for _, site := range sites.DefaultSites {

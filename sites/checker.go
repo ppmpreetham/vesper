@@ -8,6 +8,8 @@ import (
 	"time"
 )
 
+var GlobalTimeoutSeconds int = 0 // 0 means use site.TimeoutSeconds or default
+
 func CheckUsername(site Site, username string) (found bool, finalURL string, err error) {
 
 	// Validate username against regex
@@ -28,12 +30,18 @@ func CheckUsername(site Site, username string) (found bool, finalURL string, err
 	// Check if timeout is specified
 	var client *http.Client
 
-	if site.TimeoutSeconds != 0 {
-		client = &http.Client{
-			Timeout: time.Duration(site.TimeoutSeconds) * time.Second,
-		}
-	} else {
-		client = &http.Client{}
+	// Use GlobalTimeoutSeconds if set, else site.TimeoutSeconds, else default
+	effectiveTimeout := site.TimeoutSeconds
+	if GlobalTimeoutSeconds > 0 {
+		effectiveTimeout = GlobalTimeoutSeconds
+	}
+	if effectiveTimeout == 0 {
+		effectiveTimeout = 10
+	}
+
+	// HTTP client with timeout
+	client = &http.Client{
+		Timeout: time.Duration(effectiveTimeout) * time.Second,
 	}
 
 	url := fmt.Sprintf(site.UrlTemplate, username)
