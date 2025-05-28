@@ -20,8 +20,8 @@ type ReturnData struct {
 var httpClient = &http.Client{
 	Timeout: 7 * time.Second,
 	Transport: &http.Transport{
-		MaxIdleConns:        100,
-		MaxIdleConnsPerHost: 100,
+		MaxIdleConns:        200,
+		MaxIdleConnsPerHost: 200,
 		IdleConnTimeout:     90 * time.Second,
 	},
 }

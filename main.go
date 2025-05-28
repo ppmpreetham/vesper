@@ -14,8 +14,10 @@ func main() {
 
 	username := "ppmpreetham"
 	var wg sync.WaitGroup
-	jobs := make(chan sites.WhatsmynameSiteData, 100)
-	results := make(chan tools.ReturnData, 100)
+	buffersize := 1000
+
+	jobs := make(chan sites.WhatsmynameSiteData, buffersize)
+	results := make(chan tools.ReturnData, buffersize)
 
 	// Start worker pool
 	numWorkers := 200
