@@ -49,6 +49,13 @@ func WhatsMyNameCheckURL(username string, site sites.WhatsmynameSiteData) Return
 	}
 	defer resp.Body.Close()
 
+	// Check for HTTP errors
+	if resp.StatusCode >= 500 {
+		resp.Body.Close()
+		result.Status = "ERROR"
+		return result
+	}
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
 		result.Status = "ERROR"
