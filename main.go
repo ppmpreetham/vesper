@@ -18,7 +18,7 @@ func main() {
 	results := make(chan tools.ReturnData, 100)
 
 	// Start worker pool
-	numWorkers := 20
+	numWorkers := 200
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
