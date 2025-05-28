@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io"
 	"net/http"
+	"regexp"
 	"strings"
 	"time"
 
@@ -72,6 +73,58 @@ func WhatsMyNameCheckURL(username string, site sites.WhatsmynameSiteData) Return
 			}
 		}
 	}
+
+	return result
+}
+
+func SherlockCheckURL(username string, site sites.SherlockSiteData, Sitename string) ReturnData {
+	result := ReturnData{
+		Name:     Sitename,
+		URL:      fmt.Sprintf(site.URL, username),
+		Status:   "NOT FOUND",
+		Metadata: make(map[string]string),
+	}
+
+	// Regex Check username before passing to URL
+	if site.RegexCheck != "" {
+		matched, err := regexp.MatchString(site.RegexCheck, username)
+		if err != nil || !matched {
+			result.Status = "USERNAME CAN'T BE MADE"
+			return result
+		}
+	}
+
+	// Prepare custom HTTP request with User-Agent
+	req, err := http.NewRequest("GET", result.URL, nil)
+	if err != nil {
+		result.Status = "ERROR"
+		return result
+	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		result.Status = "ERROR"
+		return result
+	}
+	defer resp.Body.Close()
+
+	// Check for HTTP errors
+	if resp.StatusCode >= 500 {
+		resp.Body.Close()
+		result.Status = "ERROR"
+		return result
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		result.Status = "ERROR"
+		return result
+	}
+	// bodyStr := string(bodyBytes)
+
+	// Match logic
+	// TODO: To implement the logic
 
 	return result
 }
