@@ -5,66 +5,66 @@ import (
 	"io"
 	"net/http"
 	"strings"
-	"sync"
+	"time"
 
 	"github.com/ppmpreetham/vesper/sites"
 )
 
 type ReturnData struct {
-	name     string
-	url      string
-	status   string
-	metadata map[string]string
+	Name     string
+	URL      string
+	Status   string
+	Metadata map[string]string
 }
 
-func WhatsMyNameCheckURL(username string, site sites.WhatsmynameSiteData, wg *sync.WaitGroup) ReturnData {
-	returnData := ReturnData{
-		name:     site.Name,
-		url:      "",
-		status:   "OK",
-		metadata: make(map[string]string),
+var httpClient = &http.Client{
+	Timeout: 7 * time.Second,
+	Transport: &http.Transport{
+		MaxIdleConns:        100,
+		MaxIdleConnsPerHost: 100,
+		IdleConnTimeout:     90 * time.Second,
+	},
+}
+
+func WhatsMyNameCheckURL(username string, site sites.WhatsmynameSiteData) ReturnData {
+	result := ReturnData{
+		Name:     site.Name,
+		URL:      fmt.Sprintf(site.URICheck, username),
+		Status:   "NOT FOUND",
+		Metadata: make(map[string]string),
 	}
 
-	formattedURL := fmt.Sprintf(site.URICheck, username)
-	// fmt.Println(formattedURL)
-	returnData.url = formattedURL
-
-	// Check if the site is reachable
-	resp, err := http.Get(formattedURL)
+	// Prepare custom HTTP request with User-Agent
+	req, err := http.NewRequest("GET", result.URL, nil)
 	if err != nil {
-		returnData.status = "ERROR"
-		return returnData
+		result.Status = "ERROR"
+		return result
 	}
+	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
 
-	// Read response body
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		result.Status = "ERROR"
+		return result
+	}
+	defer resp.Body.Close()
+
 	bodyBytes, err := io.ReadAll(resp.Body)
 	if err != nil {
-		returnData.status = "ERROR"
-		return returnData
+		result.Status = "ERROR"
+		return result
 	}
 	bodyStr := string(bodyBytes)
 
-	defer resp.Body.Close()
-
-	// Check if site matches expected conditions
+	// Match logic
 	if strings.Contains(bodyStr, site.EString) && site.ECode == resp.StatusCode {
-		// Check if m_string is not in the response body
 		if !strings.Contains(bodyStr, site.MString) {
-			// Check if (m_code != status_code) when m_code != e_code, otherwise return true
-			mCodeCondition := true
-			if site.MCode != site.ECode {
-				mCodeCondition = site.MCode != resp.StatusCode
-			}
-
-			// If both conditions are met, set status to "FOUND"
+			mCodeCondition := site.MCode == site.ECode || site.MCode != resp.StatusCode
 			if mCodeCondition {
-				returnData.status = "FOUND"
-				fmt.Println("Found:", site.Name, "at", formattedURL)
+				result.Status = "FOUND"
 			}
 		}
-	} else {
-		returnData.status = "NOT FOUND"
 	}
 
-	return returnData
+	return result
 }
