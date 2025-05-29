@@ -24,7 +24,7 @@
   
 ## Installation
 ### Build from Source
-> [!NOTE] Requires Go 1.20 or later
+>[!NOTE] Requires Go 1.20 or later
 ```bash
 git clone https://github.com/ppmpreetham/vesper.git
 cd vesper
