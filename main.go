@@ -8,6 +8,7 @@ import (
 
 	"github.com/ppmpreetham/vesper/sites"
 	"github.com/ppmpreetham/vesper/tools"
+	// "github.com/ppmpreetham/vesper/utils"
 )
 
 func main() {
@@ -47,10 +48,10 @@ func main() {
 		}
 	} else {
 		fmt.Println("Enumerating on all databases")
-		database = "whatsmyname" // Default to whatsmyname if no database specified
+		database = "whatsmyname" // default to whatsmyname if no database specified
 	}
 
-	sites.PrintLogo() // logo goes here
+	// utils.PrintLogo() // logo goes here
 	fmt.Println("Starting enumeration for username:", username)
 
 	startTime := time.Now()
@@ -62,7 +63,7 @@ func main() {
 	results := make(chan tools.ReturnData, buffersize)
 
 	// Start worker pool
-	numWorkers := 200
+	numWorkers := 250
 	for i := 0; i < numWorkers; i++ {
 		wg.Add(1)
 		go func() {
