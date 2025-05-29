@@ -121,10 +121,37 @@ func SherlockCheckURL(username string, site sites.SherlockSiteData, Sitename str
 		result.Status = "ERROR"
 		return result
 	}
-	// bodyStr := string(bodyBytes)
+	bodyStr := string(bodyBytes)
 
 	// Match logic
-	// TODO: To implement the logic
-
+	switch site.ErrorType {
+	case "status_code":
+		if resp.StatusCode == site.ErrorCode {
+			result.Status = "NOT FOUND"
+		} else {
+			result.Status = "FOUND"
+		}
+	case "message":
+		foundError := false
+		for _, errMsg := range site.ErrorMsg {
+			if strings.Contains(bodyStr, errMsg) {
+				foundError = true
+				break
+			}
+		}
+		if foundError {
+			result.Status = "NOT FOUND"
+		} else {
+			result.Status = "FOUND"
+		}
+	case "response_url":
+		if resp.Request.URL.String() == site.ErrorURL {
+			result.Status = "NOT FOUND"
+		} else {
+			result.Status = "FOUND"
+		}
+	default:
+		result.Status = "ERROR"
+	}
 	return result
 }
