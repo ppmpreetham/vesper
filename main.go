@@ -1,6 +1,7 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"sync"
 	"time"
@@ -10,9 +11,49 @@ import (
 )
 
 func main() {
+	// Parse command-line flags
+	flag.Parse()
+	flag.Usage = func() {
+		fmt.Println("Usage: vesper <username> [options]")
+		fmt.Println("Options:")
+		fmt.Println("  -h, --help\t\tShow this help message")
+		fmt.Println("  -v, --version\t\tShow version information")
+		fmt.Println("  -d, --database\tEnumerate on a specific database (default: all)\nList of databases:\n\t- sherlock\n\t- maigret\n\t- whatsmyname")
+	}
+
+	flag.Bool("help", false, "Show help message")
+	flag.Bool("version", false, "Show version information")
+	flag.String("database", "", "Enumerate on a specific database (default: all)")
+
+	// USERNAME arg
+	username := flag.Arg(0)
+	if username == "" {
+		fmt.Println("Error: Username is required")
+		flag.Usage()
+		return
+	}
+
+	if username[0] == '@' {
+		username = username[1:] // Remove '@' if present
+	}
+
+	// DATABASE arg
+	database := flag.Lookup("database").Value.String()
+	if database != "" {
+		fmt.Println("Enumerating on database:", database)
+		if database != "whatsmyname" {
+			fmt.Println("Error: Currently only 'whatsmyname' database is supported")
+			return
+		}
+	} else {
+		fmt.Println("Enumerating on all databases")
+		database = "whatsmyname" // Default to whatsmyname if no database specified
+	}
+
+	fmt.Println("Starting enumeration for username:", username)
+
 	startTime := time.Now()
 
-	username := "ppmpreetham"
 	var wg sync.WaitGroup
 	buffersize := 1000
 
