@@ -50,6 +50,7 @@ func main() {
 		database = "whatsmyname" // Default to whatsmyname if no database specified
 	}
 
+	sites.PrintLogo() // logo goes here
 	fmt.Println("Starting enumeration for username:", username)
 
 	startTime := time.Now()
