@@ -193,3 +193,136 @@ func SherlockCheckURL(username string, site sites.SherlockSiteData, Sitename str
 	}
 	return result
 }
+
+func MaigretCheckURL(username string, site sites.MaigretSiteData, siteName string) ReturnData {
+	result := ReturnData{
+		Name:     siteName,
+		Status:   "NOT FOUND",
+		Metadata: make(map[string]string),
+	}
+
+	// Skip disabled sites
+	if site.Disabled != nil && *site.Disabled {
+		result.Status = "DISABLED"
+		return result
+	}
+
+	// Check if URL is available
+	if site.URL == nil {
+		result.Status = "ERROR"
+		return result
+	}
+
+	// Build URL by replacing {username} placeholder
+	url := strings.ReplaceAll(*site.URL, "{username}", username)
+	result.URL = url
+
+	// Regex Check username before making request
+	if site.RegexCheck != nil {
+		matched, err := regexp.MatchString(*site.RegexCheck, username)
+		if err != nil || !matched {
+			result.Status = "USERNAME CAN'T BE MADE"
+			return result
+		}
+	}
+
+	// Use URLProbe if available, otherwise use URL
+	checkURL := url
+	if site.URLProbe != nil {
+		checkURL = strings.ReplaceAll(*site.URLProbe, "{username}", username)
+	}
+
+	// Prepare HTTP request
+	req, err := http.NewRequest("GET", checkURL, nil)
+	if err != nil {
+		result.Status = "ERROR"
+		return result
+	}
+
+	// Set User-Agent
+	req.Header.Set("User-Agent", USERAGENT)
+
+	resp, err := httpClient.Do(req)
+	if err != nil {
+		result.Status = "ERROR"
+		return result
+	}
+	defer resp.Body.Close()
+
+	// Check for HTTP errors
+	if resp.StatusCode >= 500 {
+		result.Status = "ERROR"
+		return result
+	}
+
+	bodyBytes, err := io.ReadAll(resp.Body)
+	if err != nil {
+		result.Status = "ERROR"
+		return result
+	}
+	bodyStr := string(bodyBytes)
+
+	// Determine check type (default to status_code if not specified)
+	checkType := "status_code"
+	if site.CheckType != nil {
+		checkType = *site.CheckType
+	}
+
+	// Match logic based on check type
+	switch checkType {
+	case "status_code":
+		if resp.StatusCode == 200 {
+			result.Status = "FOUND"
+		} else {
+			result.Status = "NOT FOUND"
+		}
+	case "message":
+		// Check for presence strings (indicating account exists)
+		foundPresence := false
+
+		// Check PresenseStrs (note: typo in original data structure)
+		for _, presStr := range site.PresenseStrs {
+			if strings.Contains(bodyStr, presStr) {
+				foundPresence = true
+				break
+			}
+		}
+
+		// Check PresenceStrs (correct spelling)
+		if !foundPresence {
+			for _, presStr := range site.PresenceStrs {
+				if strings.Contains(bodyStr, presStr) {
+					foundPresence = true
+					break
+				}
+			}
+		}
+
+		// Check for absence strings (indicating account doesn't exist)
+		foundAbsence := false
+		for _, absStr := range site.AbsenceStrs {
+			if strings.Contains(bodyStr, absStr) {
+				foundAbsence = true
+				break
+			}
+		}
+
+		// If we found presence indicators and no absence indicators, account exists
+		if foundPresence && !foundAbsence {
+			result.Status = "FOUND"
+		} else if foundAbsence {
+			result.Status = "NOT FOUND"
+		} else {
+			// If no specific indicators found, default to status code logic
+			if resp.StatusCode == 200 {
+				result.Status = "FOUND"
+			} else {
+				result.Status = "NOT FOUND"
+			}
+		}
+	default:
+		result.Status = "ERROR"
+	}
+
+	return result
+}
