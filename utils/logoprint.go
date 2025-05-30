@@ -21,7 +21,8 @@ func PrintLogo() {
      %    @@@@@    @@=@@ @@@@   @@@@@@@    @@      @@%@% @@@@@@     @@+      
            @@@#    @@ +@@# @      -@@@     @@*     @@  @@@ @ @@   @=         
           #:@ -     @             +@@       @@      @         %              
-                    :           @*             @                =            
+                    :           @*             @                =    
+                Created by Preetham (@ppmpreetham) on GitHub        
 `
 	fmt.Println(logo)
 }

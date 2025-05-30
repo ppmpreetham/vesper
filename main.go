@@ -61,7 +61,7 @@ func main() {
 
 	// Check which database to use
 	switch *databaseFlag {
-	case "sherlock", "":
+	case "sherlock":
 		fmt.Println("Using Sherlock database for enumeration...")
 
 		jobs := make(chan sites.SherlockSiteData, buffersize)
@@ -74,16 +74,10 @@ func main() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for {
-					select {
-					case site, ok := <-jobs:
-						if !ok {
-							return
-						}
-						siteName := <-siteNames
-						result := tools.SherlockCheckURL(username, site, siteName)
-						results <- result
-					}
+				for site := range jobs {
+					siteName := <-siteNames
+					result := tools.SherlockCheckURL(username, site, siteName)
+					results <- result
 				}
 			}()
 		}
@@ -117,7 +111,7 @@ func main() {
 		fmt.Printf("\nExecution completed in %s\n", elapsedTime)
 		fmt.Printf("Found username on %d sites\n", foundCount)
 
-	case "whatsmyname":
+	case "whatsmyname", "":
 		// Default behavior - use WhatsMyName
 		jobs := make(chan sites.WhatsmynameSiteData, buffersize)
 		results := make(chan tools.ReturnData, buffersize)

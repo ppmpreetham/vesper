@@ -27,6 +27,8 @@ var httpClient = &http.Client{
 	},
 }
 
+const USERAGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0"
+
 func WhatsMyNameCheckURL(username string, site sites.WhatsmynameSiteData) ReturnData {
 	result := ReturnData{
 		Name:     site.Name,
@@ -41,7 +43,7 @@ func WhatsMyNameCheckURL(username string, site sites.WhatsmynameSiteData) Return
 		result.Status = "ERROR"
 		return result
 	}
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
+	req.Header.Set("User-Agent", USERAGENT)
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -122,7 +124,7 @@ func SherlockCheckURL(username string, site sites.SherlockSiteData, Sitename str
 	}
 
 	// Set default User-Agent
-	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
+	req.Header.Set("User-Agent", USERAGENT)
 
 	// Set custom headers if provided
 	if site.Headers != nil {
