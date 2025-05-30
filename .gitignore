@@ -1,12 +1,3 @@
-# Binaries
-*.exe
-*.exe~
-*.dll
-*.so
-*.dylib
-*.test
-*.out
-
 # IDE/editor configs
 .vscode/
 .idea/
