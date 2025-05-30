@@ -111,7 +111,7 @@ func main() {
 		fmt.Printf("\nExecution completed in %s\n", elapsedTime)
 		fmt.Printf("Found username on %d sites\n", foundCount)
 
-	case "whatsmyname", "":
+	case "whatsmyname":
 		// Default behavior - use WhatsMyName
 		jobs := make(chan sites.WhatsmynameSiteData, buffersize)
 		results := make(chan tools.ReturnData, buffersize)
@@ -157,8 +157,54 @@ func main() {
 		fmt.Printf("Found username on %d sites\n", foundCount)
 
 	case "maigret":
-		fmt.Println("Maigret database not implemented yet")
-		return
+		fmt.Println("Using Maigret database for enumeration...")
+
+		jobs := make(chan sites.MaigretSiteData, buffersize)
+		results := make(chan tools.ReturnData, buffersize)
+		siteNames := make(chan string, buffersize)
+
+		// Start worker pool for Maigret
+		numWorkers := 250
+		for i := 0; i < numWorkers; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for site := range jobs {
+					siteName := <-siteNames
+					result := tools.MaigretCheckURL(username, site, siteName)
+					results <- result
+				}
+			}()
+		}
+
+		// Send Maigret jobs using the static map
+		go func() {
+			for siteName, site := range sites.MaigretSites {
+				jobs <- site
+				siteNames <- siteName
+			}
+			close(jobs)
+			close(siteNames)
+		}()
+
+		// Wait and close results
+		go func() {
+			wg.Wait()
+			close(results)
+		}()
+
+		// Collect and print results
+		foundCount := 0
+		for result := range results {
+			if result.Status == "FOUND" {
+				foundCount++
+				fmt.Println("Found:", result.Name, "at", result.URL)
+			}
+		}
+
+		elapsedTime := time.Since(startTime)
+		fmt.Printf("\nExecution completed in %s\n", elapsedTime)
+		fmt.Printf("Found username on %d sites\n", foundCount)
 
 	default:
 		fmt.Printf("Unknown database: %s\n", *databaseFlag)
