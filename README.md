@@ -27,6 +27,10 @@
 
 ## Performance
 
+- ~ 21 seconds for whatsmyname
+- ~ 12 seconds for sherlock
+- ~ 33 seconds for maigret
+- Tested on Arch Linux with 16GB RAM and AMD Ryzen 7 5000 Series
 - Thrice as fast as [blackbird](https://github.com/p1ngul1n0/blackbird)
   
 ## Installation
