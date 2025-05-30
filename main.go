@@ -8,10 +8,17 @@ import (
 
 	"github.com/ppmpreetham/vesper/sites"
 	"github.com/ppmpreetham/vesper/tools"
-	// "github.com/ppmpreetham/vesper/utils"
+	"github.com/ppmpreetham/vesper/utils"
 )
 
 func main() {
+	utils.PrintLogo() // logo goes here
+
+	// Define flags before parsing
+	helpFlag := flag.Bool("help", false, "Show help message")
+	versionFlag := flag.Bool("version", false, "Show version information")
+	databaseFlag := flag.String("database", "", "Enumerate on a specific database (default: all)")
+
 	// Parse command-line flags
 	flag.Parse()
 	flag.Usage = func() {
@@ -22,9 +29,16 @@ func main() {
 		fmt.Println("  -d, --database\tEnumerate on a specific database (default: all)\nList of databases:\n\t- sherlock\n\t- maigret\n\t- whatsmyname")
 	}
 
-	flag.Bool("help", false, "Show help message")
-	flag.Bool("version", false, "Show version information")
-	flag.String("database", "", "Enumerate on a specific database (default: all)")
+	// Handle flags
+	if *helpFlag {
+		flag.Usage()
+		return
+	}
+
+	if *versionFlag {
+		fmt.Println("Vesper version 1.0.0") // Update version as needed
+		return
+	}
 
 	// USERNAME arg
 	username := flag.Arg(0)
@@ -38,20 +52,6 @@ func main() {
 		username = username[1:] // Remove '@' if present
 	}
 
-	// DATABASE arg
-	database := flag.Lookup("database").Value.String()
-	if database != "" {
-		fmt.Println("Enumerating on database:", database)
-		if database != "whatsmyname" {
-			fmt.Println("Error: Currently only 'whatsmyname' database is supported")
-			return
-		}
-	} else {
-		fmt.Println("Enumerating on all databases")
-		database = "whatsmyname" // default to whatsmyname if no database specified
-	}
-
-	// utils.PrintLogo() // logo goes here
 	fmt.Println("Starting enumeration for username:", username)
 
 	startTime := time.Now()
@@ -59,46 +59,116 @@ func main() {
 	var wg sync.WaitGroup
 	buffersize := 1000
 
-	jobs := make(chan sites.WhatsmynameSiteData, buffersize)
-	results := make(chan tools.ReturnData, buffersize)
+	// Check which database to use
+	switch *databaseFlag {
+	case "sherlock", "":
+		fmt.Println("Using Sherlock database for enumeration...")
 
-	// Start worker pool
-	numWorkers := 250
-	for i := 0; i < numWorkers; i++ {
-		wg.Add(1)
+		jobs := make(chan sites.SherlockSiteData, buffersize)
+		results := make(chan tools.ReturnData, buffersize)
+		siteNames := make(chan string, buffersize)
+
+		// Start worker pool for Sherlock
+		numWorkers := 250
+		for i := 0; i < numWorkers; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for {
+					select {
+					case site, ok := <-jobs:
+						if !ok {
+							return
+						}
+						siteName := <-siteNames
+						result := tools.SherlockCheckURL(username, site, siteName)
+						results <- result
+					}
+				}
+			}()
+		}
+
+		// Send Sherlock jobs using the static map
 		go func() {
-			defer wg.Done()
-			for site := range jobs {
-				result := tools.WhatsMyNameCheckURL(username, site)
-				results <- result
+			for siteName, site := range sites.SherlockSites {
+				jobs <- site
+				siteNames <- siteName
 			}
+			close(jobs)
+			close(siteNames)
 		}()
-	}
 
-	// Send jobs
-	go func() {
-		for _, site := range sites.WhatsmynameSites {
-			jobs <- site
+		// Wait and close results
+		go func() {
+			wg.Wait()
+			close(results)
+		}()
+
+		// Collect and print results
+		foundCount := 0
+		for result := range results {
+			if result.Status == "FOUND" {
+				foundCount++
+				fmt.Println("Found:", result.Name, "at", result.URL)
+			}
 		}
-		close(jobs)
-	}()
 
-	// Wait and close results
-	go func() {
-		wg.Wait()
-		close(results)
-	}()
+		elapsedTime := time.Since(startTime)
+		fmt.Printf("\nExecution completed in %s\n", elapsedTime)
+		fmt.Printf("Found username on %d sites\n", foundCount)
 
-	// Collect and print results
-	foundCount := 0
-	for result := range results {
-		if result.Status == "FOUND" {
-			foundCount++
-			fmt.Println("Found:", result.Name, "at", result.URL)
+	case "whatsmyname":
+		// Default behavior - use WhatsMyName
+		jobs := make(chan sites.WhatsmynameSiteData, buffersize)
+		results := make(chan tools.ReturnData, buffersize)
+
+		// Start worker pool
+		numWorkers := 250
+		for i := 0; i < numWorkers; i++ {
+			wg.Add(1)
+			go func() {
+				defer wg.Done()
+				for site := range jobs {
+					result := tools.WhatsMyNameCheckURL(username, site)
+					results <- result
+				}
+			}()
 		}
-	}
 
-	elapsedTime := time.Since(startTime)
-	fmt.Printf("\nExecution completed in %s\n", elapsedTime)
-	fmt.Printf("Found username on %d sites\n", foundCount)
+		// Send jobs
+		go func() {
+			for _, site := range sites.WhatsmynameSites {
+				jobs <- site
+			}
+			close(jobs)
+		}()
+
+		// Wait and close results
+		go func() {
+			wg.Wait()
+			close(results)
+		}()
+
+		// Collect and print results
+		foundCount := 0
+		for result := range results {
+			if result.Status == "FOUND" {
+				foundCount++
+				fmt.Println("Found:", result.Name, "at", result.URL)
+			}
+		}
+
+		elapsedTime := time.Since(startTime)
+		fmt.Printf("\nExecution completed in %s\n", elapsedTime)
+		fmt.Printf("Found username on %d sites\n", foundCount)
+
+	case "maigret":
+		fmt.Println("Maigret database not implemented yet")
+		return
+
+	default:
+		fmt.Printf("Unknown database: %s\n", *databaseFlag)
+		fmt.Println("Available databases: sherlock, whatsmyname, maigret")
+		return
+	}
 }

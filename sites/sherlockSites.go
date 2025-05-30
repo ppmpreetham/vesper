@@ -1119,6 +1119,9 @@ var SherlockSites = map[string]SherlockSiteData{
 	"CGTrader": {
 		ErrorType: "status_code",
 		RegexCheck: "^[^.]*?$",
+		ErrorMsg: []string{
+			"The page you requested could not be found",
+		},
 		URL: "https://www.cgtrader.com/%s",
 		URLMain: "https://www.cgtrader.com",
 		UsernameClaimed: "blue",

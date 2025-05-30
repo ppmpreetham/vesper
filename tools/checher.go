@@ -94,13 +94,42 @@ func SherlockCheckURL(username string, site sites.SherlockSiteData, Sitename str
 		}
 	}
 
-	// Prepare custom HTTP request with User-Agent
-	req, err := http.NewRequest("GET", result.URL, nil)
+	// Use URLProbe if available, otherwise use URL
+	checkURL := result.URL
+	if site.URLProbe != "" {
+		checkURL = fmt.Sprintf(site.URLProbe, username)
+	}
+
+	// Determine HTTP method
+	method := "GET"
+	if site.RequestMethod != "" {
+		method = site.RequestMethod
+	}
+
+	// Prepare request body for POST requests
+	var requestBody io.Reader
+	if method == "POST" && site.RequestPayload != nil {
+		if payloadStr, ok := site.RequestPayload.(string); ok {
+			requestBody = strings.NewReader(fmt.Sprintf(payloadStr, username))
+		}
+	}
+
+	// Prepare custom HTTP request
+	req, err := http.NewRequest(method, checkURL, requestBody)
 	if err != nil {
 		result.Status = "ERROR"
 		return result
 	}
+
+	// Set default User-Agent
 	req.Header.Set("User-Agent", "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0")
+
+	// Set custom headers if provided
+	if site.Headers != nil {
+		for key, value := range site.Headers {
+			req.Header.Set(key, value)
+		}
+	}
 
 	resp, err := httpClient.Do(req)
 	if err != nil {
@@ -111,7 +140,6 @@ func SherlockCheckURL(username string, site sites.SherlockSiteData, Sitename str
 
 	// Check for HTTP errors
 	if resp.StatusCode >= 500 {
-		resp.Body.Close()
 		result.Status = "ERROR"
 		return result
 	}
@@ -126,14 +154,22 @@ func SherlockCheckURL(username string, site sites.SherlockSiteData, Sitename str
 	// Match logic
 	switch site.ErrorType {
 	case "status_code":
-		if resp.StatusCode == site.ErrorCode {
+		// Default error code is 404 if not specified
+		errorCode := 404
+		if site.ErrorCode != 0 {
+			errorCode = site.ErrorCode
+		}
+
+		if resp.StatusCode == errorCode {
 			result.Status = "NOT FOUND"
 		} else {
 			result.Status = "FOUND"
 		}
 	case "message":
 		foundError := false
-		for _, errMsg := range site.ErrorMsg {
+		// Convert ErrorMessage to []string for checking
+		errorMessages := []string(site.ErrorMsg)
+		for _, errMsg := range errorMessages {
 			if strings.Contains(bodyStr, errMsg) {
 				foundError = true
 				break

@@ -3,6 +3,7 @@ package utils
 import (
 	"fmt"
 )
+
 // PrintLogo prints the logo to the console.
 func PrintLogo() {
 	logo := `

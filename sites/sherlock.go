@@ -8,6 +8,25 @@ import (
 
 type ErrorMessage []string
 
+// Custom unmarshaling to handle both string and []string for errorMsg
+func (em *ErrorMessage) UnmarshalJSON(data []byte) error {
+	// Try to unmarshal as array first
+	var arr []string
+	if err := json.Unmarshal(data, &arr); err == nil {
+		*em = ErrorMessage(arr)
+		return nil
+	}
+
+	// If that fails, try as single string
+	var str string
+	if err := json.Unmarshal(data, &str); err == nil {
+		*em = ErrorMessage([]string{str})
+		return nil
+	}
+
+	return nil // Return empty slice if both fail
+}
+
 type SherlockSiteData struct {
 	ErrorMsg        ErrorMessage      `json:"errorMsg,omitempty"`
 	ErrorType       string            `json:"errorType"`
