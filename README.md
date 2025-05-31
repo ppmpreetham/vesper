@@ -37,6 +37,17 @@
 > ⚡ **Up to 3x faster** than competing tools like [blackbird](https://github.com/p1ngul1n0/blackbird)
   
 ## Installation
+
+### Get it from Releases
+Download the latest release binary for your operating system from the [releases page](https://github.com/ppmpreetham/vesper/releases).
+
+```bash
+# Make the downloaded binary executable (Linux/macOS)
+chmod +x vesper
+
+# Run it
+./vesper
+```
 ### Build from Source
 > [!NOTE]
 > Requires Go 1.20 or later
@@ -52,7 +63,7 @@ go build -o vesper
 ### Basic Usage
 ```bash
 # Search for a username across all databases
-./vesper
+./vesper john_doe
 
 # Search using a specific database
 ./vesper --database whatsmyname john_doe
