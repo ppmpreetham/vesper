@@ -21,10 +21,17 @@ type ReturnData struct {
 
 const USERAGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0"
 
+var httpTimeout = 7 * time.Second
+
+// custom timeout
+func SetHTTPTimeout(timeout time.Duration) {
+	httpTimeout = timeout
+}
+
 // new HTTP client for each database run
 func NewHTTPClient() *http.Client {
 	dialer := &net.Dialer{
-		Timeout:   7 * time.Second,
+		Timeout:   httpTimeout,
 		KeepAlive: 30 * time.Second,
 		Resolver: &net.Resolver{
 			PreferGo: true,
@@ -32,7 +39,7 @@ func NewHTTPClient() *http.Client {
 	}
 
 	return &http.Client{
-		Timeout: 7 * time.Second,
+		Timeout: httpTimeout,
 		Transport: &http.Transport{
 			MaxIdleConns:        100,
 			MaxIdleConnsPerHost: 50,
