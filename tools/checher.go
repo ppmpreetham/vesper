@@ -19,25 +19,41 @@ type ReturnData struct {
 	Metadata map[string]string
 }
 
-var dialer = &net.Dialer{
-	Timeout:   5 * time.Second,
-	KeepAlive: 30 * time.Second,
-	Resolver: &net.Resolver{
-		PreferGo: true,
-	},
-}
-
-var httpClient = &http.Client{
-	Timeout: 7 * time.Second,
-	Transport: &http.Transport{
-		MaxIdleConns:        200,
-		MaxIdleConnsPerHost: 200,
-		IdleConnTimeout:     90 * time.Second,
-		DialContext:         dialer.DialContext,
-	},
-}
-
 const USERAGENT = "Mozilla/5.0 (X11; Linux x86_64; rv:129.0) Gecko/20100101 Firefox/129.0"
+
+// new HTTP client for each database run
+func NewHTTPClient() *http.Client {
+	dialer := &net.Dialer{
+		Timeout:   7 * time.Second,
+		KeepAlive: 30 * time.Second,
+		Resolver: &net.Resolver{
+			PreferGo: true,
+		},
+	}
+
+	return &http.Client{
+		Timeout: 7 * time.Second,
+		Transport: &http.Transport{
+			MaxIdleConns:        100,
+			MaxIdleConnsPerHost: 50,
+			IdleConnTimeout:     30 * time.Second,
+			DialContext:         dialer.DialContext,
+			DisableKeepAlives:   false,
+			ForceAttemptHTTP2:   false,
+		},
+	}
+}
+
+// Global client that gets reset
+var httpClient = NewHTTPClient()
+
+// Function to reset the HTTP client
+func ResetHTTPClient() {
+	if httpClient != nil {
+		httpClient.CloseIdleConnections()
+	}
+	httpClient = NewHTTPClient()
+}
 
 func WhatsMyNameCheckURL(username string, site sites.WhatsmynameSiteData) ReturnData {
 	result := ReturnData{

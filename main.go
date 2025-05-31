@@ -35,6 +35,9 @@ func main() {
 	databaseFlag := flag.String("database", "", "Enumerate on a specific database (default: all)")
 	flag.StringVar(databaseFlag, "d", "", "Enumerate on a specific database (default: all)")
 
+	timeoutFlag := flag.Int("timeout", 7, "HTTP request timeout in seconds (default: 7)")
+	flag.IntVar(timeoutFlag, "t", 7, "HTTP request timeout in seconds (default: 7)")
+
 	// command-line flags
 	flag.Parse()
 	flag.Usage = func() {
@@ -42,7 +45,9 @@ func main() {
 		fmt.Println("Options:")
 		fmt.Println("  -h, --help\t\tShow this help message")
 		fmt.Println("  -v, --version\t\tShow version information")
-		fmt.Println("  -d, --database\tEnumerate on a specific database (default: all)\nList of databases:\n\t- sherlock\n\t- maigret\n\t- whatsmyname")
+		fmt.Println("  -d, --database\tEnumerate on a specific database (default: all)")
+		fmt.Println("  -t, --timeout\t\tHTTP request timeout in seconds (default: 7)")
+		fmt.Println("\nList of databases:\n\t- sherlock\n\t- maigret\n\t- whatsmyname")
 	}
 
 	// flags
@@ -64,7 +69,16 @@ func main() {
 		return
 	}
 
-	fmt.Println("Starting enumeration for username:", username)
+	// Validate timeout
+	if *timeoutFlag < 1 || *timeoutFlag > 60 {
+		fmt.Println("Error: Timeout must be between 1 and 60 seconds")
+		return
+	}
+
+	// Set the timeout in tools package
+	tools.SetHTTPTimeout(time.Duration(*timeoutFlag) * time.Second)
+
+	fmt.Printf("Starting enumeration for username: %s (timeout: %ds)\n", username, *timeoutFlag)
 
 	startTime := time.Now()
 
@@ -224,6 +238,7 @@ func main() {
 
 		// Run Sherlock database first
 		fmt.Println("\n=== Starting Sherlock database enumeration ===")
+		tools.ResetHTTPClient() // reset before each database
 
 		sherlockJobs := make(chan SherlockJob, buffersize)
 		sherlockResults := make(chan tools.ReturnData, buffersize)
@@ -269,8 +284,9 @@ func main() {
 		fmt.Printf("Sherlock database completed - Found %d matches\n", sherlockCount)
 		totalFoundCount += sherlockCount
 
-		// Reset WaitGroup for next database
+		// reset WaitGroup and HTTP client for next database
 		wg = sync.WaitGroup{}
+		tools.ResetHTTPClient() // reset between databases
 
 		// Run WhatsMyName database second
 		fmt.Println("\n=== Starting WhatsMyName database enumeration ===")
@@ -315,8 +331,9 @@ func main() {
 		fmt.Printf("WhatsMyName database completed - Found %d matches\n", wmnCount)
 		totalFoundCount += wmnCount
 
-		// Reset WaitGroup for next database
+		// reset WaitGroup and HTTP client for next database
 		wg = sync.WaitGroup{}
+		tools.ResetHTTPClient() // reset between databases
 
 		// Run Maigret database third
 		fmt.Println("\n=== Starting Maigret database enumeration ===")
