@@ -46,7 +46,7 @@ func main() {
 		fmt.Println("  -h, --help\t\tShow this help message")
 		fmt.Println("  -v, --version\t\tShow version information")
 		fmt.Println("  -d, --database\tEnumerate on a specific database (default: all)")
-		fmt.Println("  -t, --timeout\t\tHTTP request timeout in seconds (default: 7)")
+		fmt.Println("  -t, --timeout\t\tHTTP request timeout in seconds (default: 7) (high for better results, more time)")
 		fmt.Println("\nList of databases:\n\t- sherlock\n\t- maigret\n\t- whatsmyname")
 	}
 
