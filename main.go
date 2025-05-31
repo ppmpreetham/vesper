@@ -11,6 +11,17 @@ import (
 	"github.com/ppmpreetham/vesper/utils"
 )
 
+// avoid synchronization issues
+type SherlockJob struct {
+	Name string
+	Data sites.SherlockSiteData
+}
+
+type MaigretJob struct {
+	Name string
+	Data sites.MaigretSiteData
+}
+
 func main() {
 	utils.PrintLogo() // logo goes here
 
@@ -65,9 +76,8 @@ func main() {
 	case "sherlock":
 		fmt.Println("Using Sherlock database for enumeration...")
 
-		jobs := make(chan sites.SherlockSiteData, buffersize)
+		jobs := make(chan SherlockJob, buffersize)
 		results := make(chan tools.ReturnData, buffersize)
-		siteNames := make(chan string, buffersize)
 
 		// Start worker pool for Sherlock
 		numWorkers := 250
@@ -75,9 +85,8 @@ func main() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for site := range jobs {
-					siteName := <-siteNames
-					result := tools.SherlockCheckURL(username, site, siteName)
+				for job := range jobs {
+					result := tools.SherlockCheckURL(username, job.Data, job.Name)
 					results <- result
 				}
 			}()
@@ -86,11 +95,12 @@ func main() {
 		// Send Sherlock jobs using the static map
 		go func() {
 			for siteName, site := range sites.SherlockSites {
-				jobs <- site
-				siteNames <- siteName
+				jobs <- SherlockJob{
+					Name: siteName,
+					Data: site,
+				}
 			}
 			close(jobs)
-			close(siteNames)
 		}()
 
 		// Wait and close results
@@ -161,9 +171,8 @@ func main() {
 	case "maigret":
 		fmt.Println("Using Maigret database for enumeration...")
 
-		jobs := make(chan sites.MaigretSiteData, buffersize)
+		jobs := make(chan MaigretJob, buffersize)
 		results := make(chan tools.ReturnData, buffersize)
-		siteNames := make(chan string, buffersize)
 
 		// Start worker pool for Maigret
 		numWorkers := 250
@@ -171,9 +180,8 @@ func main() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for site := range jobs {
-					siteName := <-siteNames
-					result := tools.MaigretCheckURL(username, site, siteName)
+				for job := range jobs {
+					result := tools.MaigretCheckURL(username, job.Data, job.Name)
 					results <- result
 				}
 			}()
@@ -182,11 +190,12 @@ func main() {
 		// Send Maigret jobs using the static map
 		go func() {
 			for siteName, site := range sites.MaigretSites {
-				jobs <- site
-				siteNames <- siteName
+				jobs <- MaigretJob{
+					Name: siteName,
+					Data: site,
+				}
 			}
 			close(jobs)
-			close(siteNames)
 		}()
 
 		// Wait and close results
@@ -216,9 +225,8 @@ func main() {
 		// Run Sherlock database first
 		fmt.Println("\n=== Starting Sherlock database enumeration ===")
 
-		jobs := make(chan sites.SherlockSiteData, buffersize)
-		results := make(chan tools.ReturnData, buffersize)
-		siteNames := make(chan string, buffersize)
+		sherlockJobs := make(chan SherlockJob, buffersize)
+		sherlockResults := make(chan tools.ReturnData, buffersize)
 
 		// Start worker pool for Sherlock
 		numWorkers := 250
@@ -226,10 +234,9 @@ func main() {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for site := range jobs {
-					siteName := <-siteNames
-					result := tools.SherlockCheckURL(username, site, siteName)
-					results <- result
+				for job := range sherlockJobs {
+					result := tools.SherlockCheckURL(username, job.Data, job.Name)
+					sherlockResults <- result
 				}
 			}()
 		}
@@ -237,22 +244,23 @@ func main() {
 		// Send Sherlock jobs
 		go func() {
 			for siteName, site := range sites.SherlockSites {
-				jobs <- site
-				siteNames <- siteName
+				sherlockJobs <- SherlockJob{
+					Name: siteName,
+					Data: site,
+				}
 			}
-			close(jobs)
-			close(siteNames)
+			close(sherlockJobs)
 		}()
 
 		// Wait and close results
 		go func() {
 			wg.Wait()
-			close(results)
+			close(sherlockResults)
 		}()
 
 		// Collect and print Sherlock results
 		sherlockCount := 0
-		for result := range results {
+		for result := range sherlockResults {
 			if result.Status == "FOUND" {
 				sherlockCount++
 				fmt.Println("Found:", result.Name, "at", result.URL)
@@ -313,18 +321,16 @@ func main() {
 		// Run Maigret database third
 		fmt.Println("\n=== Starting Maigret database enumeration ===")
 
-		maigretJobs := make(chan sites.MaigretSiteData, buffersize)
+		maigretJobs := make(chan MaigretJob, buffersize)
 		maigretResults := make(chan tools.ReturnData, buffersize)
-		maigretSiteNames := make(chan string, buffersize)
 
 		// Start worker pool for Maigret
 		for i := 0; i < numWorkers; i++ {
 			wg.Add(1)
 			go func() {
 				defer wg.Done()
-				for site := range maigretJobs {
-					siteName := <-maigretSiteNames
-					result := tools.MaigretCheckURL(username, site, siteName)
+				for job := range maigretJobs {
+					result := tools.MaigretCheckURL(username, job.Data, job.Name)
 					maigretResults <- result
 				}
 			}()
@@ -333,11 +339,12 @@ func main() {
 		// Send Maigret jobs
 		go func() {
 			for siteName, site := range sites.MaigretSites {
-				maigretJobs <- site
-				maigretSiteNames <- siteName
+				maigretJobs <- MaigretJob{
+					Name: siteName,
+					Data: site,
+				}
 			}
 			close(maigretJobs)
-			close(maigretSiteNames)
 		}()
 
 		// Wait and close results
