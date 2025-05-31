@@ -8,7 +8,6 @@ import (
 
 	"github.com/ppmpreetham/vesper/sites"
 	"github.com/ppmpreetham/vesper/tools"
-	"github.com/ppmpreetham/vesper/utils"
 )
 
 // avoid synchronization issues
@@ -23,7 +22,7 @@ type MaigretJob struct {
 }
 
 func main() {
-	utils.PrintLogo() // logo goes here
+	tools.PrintLogo() // logo goes here
 
 	// both short and long flags
 	helpFlag := flag.Bool("help", false, "Show help message")
