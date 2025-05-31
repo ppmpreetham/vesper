@@ -3,6 +3,7 @@ package tools
 import (
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"regexp"
 	"strings"
@@ -18,12 +19,21 @@ type ReturnData struct {
 	Metadata map[string]string
 }
 
+var dialer = &net.Dialer{
+	Timeout:   5 * time.Second,
+	KeepAlive: 30 * time.Second,
+	Resolver: &net.Resolver{
+		PreferGo: true,
+	},
+}
+
 var httpClient = &http.Client{
 	Timeout: 7 * time.Second,
 	Transport: &http.Transport{
 		MaxIdleConns:        200,
 		MaxIdleConnsPerHost: 200,
 		IdleConnTimeout:     90 * time.Second,
+		DialContext:         dialer.DialContext,
 	},
 }
 
