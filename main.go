@@ -46,7 +46,7 @@ func main() {
 		fmt.Println("  -v, --version\t\tShow version information")
 		fmt.Println("  -d, --database\tEnumerate on a specific database (default: all)")
 		fmt.Println("  -t, --timeout\t\tHTTP request timeout in seconds (default: 7) (high for better results, more time)")
-		fmt.Println("\nList of databases:\n\t- sherlock\n\t- maigret\n\t- whatsmyname")
+		fmt.Println("\nList of databases:\n\t- whatsmyname\n\t- maigret\n\t- sherlock")
 	}
 
 	// flags
@@ -63,7 +63,7 @@ func main() {
 	// USERNAME arg
 	username := flag.Arg(0)
 	if username == "" {
-		fmt.Println("Error: Username is required")
+		tools.Red("Error: Username is required\n")
 		flag.Usage()
 		return
 	}
@@ -173,7 +173,10 @@ func main() {
 		for result := range results {
 			if result.Status == "FOUND" {
 				foundCount++
-				fmt.Println("Found:", result.Name, "at", result.URL)
+				tools.Green("Found: ")
+				fmt.Print(result.Name, " at ")
+				tools.BoldGreen(result.URL)
+				fmt.Print("\n")
 			}
 		}
 
@@ -222,7 +225,10 @@ func main() {
 		for result := range results {
 			if result.Status == "FOUND" {
 				foundCount++
-				fmt.Println("Found:", result.Name, "at", result.URL)
+				tools.Green("Found: ")
+				fmt.Print(result.Name, " at ")
+				tools.BoldGreen(result.URL)
+				fmt.Print("\n")
 			}
 		}
 
@@ -236,7 +242,10 @@ func main() {
 		totalFoundCount := 0
 
 		// Run Sherlock database first
-		fmt.Println("\n=== Starting Sherlock database enumeration ===")
+		fmt.Print("\n=== Starting ")
+		tools.BoldOrange("Sherlock")
+		fmt.Println(" database enumeration ===")
+
 		tools.ResetHTTPClient() // reset before each database
 
 		sherlockJobs := make(chan SherlockJob, buffersize)
@@ -277,7 +286,10 @@ func main() {
 		for result := range sherlockResults {
 			if result.Status == "FOUND" {
 				sherlockCount++
-				fmt.Println("Found:", result.Name, "at", result.URL)
+				tools.Green("Found: ")
+				fmt.Print(result.Name, " at ")
+				tools.BoldGreen(result.URL)
+				fmt.Print("\n")
 			}
 		}
 		fmt.Printf("Sherlock database completed - Found %d matches\n", sherlockCount)
@@ -288,8 +300,9 @@ func main() {
 		tools.ResetHTTPClient() // reset between databases
 
 		// Run WhatsMyName database second
-		fmt.Println("\n=== Starting WhatsMyName database enumeration ===")
-
+		fmt.Print("\n=== Starting ")
+		tools.BoldOrange("WhatsMyName")
+		fmt.Println(" database enumeration ===")
 		wmnJobs := make(chan sites.WhatsmynameSiteData, buffersize)
 		wmnResults := make(chan tools.ReturnData, buffersize)
 
@@ -324,7 +337,10 @@ func main() {
 		for result := range wmnResults {
 			if result.Status == "FOUND" {
 				wmnCount++
-				fmt.Println("Found:", result.Name, "at", result.URL)
+				tools.Green("Found: ")
+				fmt.Print(result.Name, " at ")
+				tools.BoldGreen(result.URL)
+				fmt.Print("\n")
 			}
 		}
 		fmt.Printf("WhatsMyName database completed - Found %d matches\n", wmnCount)
@@ -335,7 +351,9 @@ func main() {
 		tools.ResetHTTPClient() // reset between databases
 
 		// Run Maigret database third
-		fmt.Println("\n=== Starting Maigret database enumeration ===")
+		fmt.Print("\n=== Starting ")
+		tools.BoldOrange("Maigret")
+		fmt.Println(" database enumeration ===")
 
 		maigretJobs := make(chan MaigretJob, buffersize)
 		maigretResults := make(chan tools.ReturnData, buffersize)
@@ -374,7 +392,10 @@ func main() {
 		for result := range maigretResults {
 			if result.Status == "FOUND" {
 				maigretCount++
-				fmt.Println("Found:", result.Name, "at", result.URL)
+				tools.Green("Found: ")
+				fmt.Print(result.Name, " at ")
+				tools.BoldGreen(result.URL)
+				fmt.Print("\n")
 			}
 		}
 		fmt.Printf("Maigret database completed - Found %d matches\n", maigretCount)
