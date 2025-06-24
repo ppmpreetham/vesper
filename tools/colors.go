@@ -16,3 +16,7 @@ var White = color.New(color.FgWhite).PrintfFunc()
 var BoldRed = color.New(color.FgRed, color.Bold).PrintfFunc()
 var BoldGreen = color.New(color.FgGreen, color.Bold).PrintfFunc()
 var BoldOrange = color.New(color.FgYellow, color.Bold).PrintfFunc()
+
+var RedString = color.New(color.FgRed).SprintfFunc()
+var GreenString = color.New(color.FgGreen).SprintfFunc()
+var OrangeString = color.New(color.FgYellow).SprintfFunc()

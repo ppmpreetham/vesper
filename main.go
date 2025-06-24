@@ -77,7 +77,7 @@ func main() {
 	// Set the timeout in tools package
 	tools.SetHTTPTimeout(time.Duration(*timeoutFlag) * time.Second)
 
-	fmt.Printf("Starting enumeration for username: %s (timeout: %ds)\n", username, *timeoutFlag)
+	fmt.Printf("Starting enumeration for username: %s (timeout: %ds)\n", tools.OrangeString(username), *timeoutFlag)
 
 	startTime := time.Now()
 
