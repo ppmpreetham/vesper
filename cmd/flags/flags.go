@@ -25,16 +25,17 @@ func Parse() (types.Config, string, bool) {
 	versionFlag := flag.Bool("version", false, "Show version information")
 	flag.BoolVar(versionFlag, "v", false, "Show version information")
 
-	databaseFlag := flag.String("database", "", "Enumerate on a specific database (default: all)")
-	flag.StringVar(databaseFlag, "d", "", "Enumerate on a specific database (default: all)")
+	databaseFlag := flag.String("database", "", "Enumerate on a specific database (default: whatsmyname)")
+	flag.StringVar(databaseFlag, "d", "", "Enumerate on a specific database (default: whatsmyname)")
 
 	timeoutFlag := flag.Int("timeout", 7, "HTTP request timeout in seconds (default: 7)")
 	flag.IntVar(timeoutFlag, "t", 7, "HTTP request timeout in seconds (default: 7)")
 
 	// Define usage
 	flag.Usage = func() {
-		fmt.Println("Usage: vesper <username> [options]")
+		fmt.Println("Usage: vesper <username> [options] or vesper --tui")
 		fmt.Println("Options:")
+		fmt.Println("  --tui\t\tUse the interactive terminal UI mode")
 		fmt.Println("  -h, --help\t\tShow this help message")
 		fmt.Println("  -v, --version\t\tShow version information")
 		fmt.Println("  -d, --database\tEnumerate using a specific database (default: whatsmyname)")

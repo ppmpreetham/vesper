@@ -50,6 +50,7 @@ func RunWhatsMyNameDatabase(username string, config types.Config) int {
 			fmt.Print(result.Name, " at ")
 			tools.BoldGreen(result.URL)
 			fmt.Print("\n")
+			tools.NotifyFound(result.Name, result.URL)
 		}
 	}
 
