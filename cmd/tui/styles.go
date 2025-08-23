@@ -1,10 +1,7 @@
 package tui
 
 import (
-	"time"
-
 	"github.com/charmbracelet/lipgloss"
-	"github.com/ppmpreetham/vesper/pkg/types"
 )
 
 var (
@@ -39,14 +36,3 @@ type item struct {
 func (i item) Title() string       { return i.title }
 func (i item) Description() string { return i.desc }
 func (i item) FilterValue() string { return i.title }
-
-// runFinishedMsg is sent when the runner is done
-type runFinishedMsg struct {
-	results []types.JobResult
-	elapsed time.Duration
-}
-
-// foundResultMsg represents a new found result
-type foundResultMsg struct {
-	result string
-}

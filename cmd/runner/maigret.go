@@ -14,6 +14,8 @@ func RunMaigretDatabase(username string, config types.Config) int {
 	var wg sync.WaitGroup
 	jobs := make(chan types.MaigretJob, config.BufferSize)
 	results := make(chan tools.ReturnData, config.BufferSize)
+	sitesChecked := 0
+	var sitesCheckedMutex sync.Mutex
 
 	// Start worker pool for Maigret
 	for i := 0; i < config.NumWorkers; i++ {
@@ -23,6 +25,15 @@ func RunMaigretDatabase(username string, config types.Config) int {
 			for job := range jobs {
 				result := tools.MaigretCheckURL(username, job.Data, job.Name)
 				results <- result
+
+				// Update sites checked counter
+				sitesCheckedMutex.Lock()
+				sitesChecked++
+				currentCount := sitesChecked
+				sitesCheckedMutex.Unlock()
+
+				// Report progress
+				tools.NotifyProgress(currentCount)
 			}
 		}()
 	}
@@ -49,12 +60,14 @@ func RunMaigretDatabase(username string, config types.Config) int {
 	for result := range results {
 		if result.Status == "FOUND" {
 			foundCount++
-			tools.Green("Found: ")
-			fmt.Print(result.Name, " at ")
-			tools.BoldGreen(result.URL)
-			fmt.Print("\n")
-			tools.NotifyFound(result.Name, result.URL)
+			handled := tools.NotifyFound(result.Name, result.URL)
 
+			if !handled {
+				tools.Green("Found: ")
+				fmt.Print(result.Name, " at ")
+				tools.BoldGreen(result.URL)
+				fmt.Print("\n")
+			}
 		}
 	}
 
