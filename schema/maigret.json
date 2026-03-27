@@ -1,0 +1,80 @@
+{
+  "properties": {
+    "engines": {
+      "additionalProperties": {
+        "properties": {
+          "name": {
+            "type": "string"
+          },
+          "presenseStrs": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "site": {
+            "properties": {
+              "absenceStrs": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "checkType": {
+                "type": "string"
+              },
+              "presenseStrs": {
+                "items": {
+                  "type": "string"
+                },
+                "type": "array"
+              },
+              "url": {
+                "type": "string"
+              }
+            },
+            "type": "object"
+          }
+        },
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "sites": {
+      "additionalProperties": {
+        "properties": {
+          "alexaRank": {
+            "type": "integer"
+          },
+          "engine": {
+            "type": "string"
+          },
+          "tags": {
+            "items": {
+              "type": "string"
+            },
+            "type": "array"
+          },
+          "urlMain": {
+            "type": "string"
+          },
+          "usernameClaimed": {
+            "type": "string"
+          },
+          "usernameUnclaimed": {
+            "type": "string"
+          }
+        },
+        "type": "object"
+      },
+      "type": "object"
+    },
+    "tags": {
+      "items": {
+        "type": "string"
+      },
+      "type": "array"
+    }
+  },
+  "type": "object"
+}
