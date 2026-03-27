@@ -9,7 +9,6 @@ import (
 	"github.com/ppmpreetham/vesper/tools"
 )
 
-// RunSherlockDatabase runs the Sherlock database enumeration
 func RunSherlockDatabase(username string, config types.Config) int {
 	var wg sync.WaitGroup
 	jobs := make(chan types.SherlockJob, config.BufferSize)
@@ -17,7 +16,6 @@ func RunSherlockDatabase(username string, config types.Config) int {
 	sitesChecked := 0
 	var sitesCheckedMutex sync.Mutex
 
-	// Start worker pool for Sherlock
 	for i := 0; i < config.NumWorkers; i++ {
 		wg.Add(1)
 		go func() {
@@ -26,19 +24,15 @@ func RunSherlockDatabase(username string, config types.Config) int {
 				result := tools.SherlockCheckURL(username, job.Data, job.Name)
 				results <- result
 
-				// Update sites checked counter
 				sitesCheckedMutex.Lock()
 				sitesChecked++
 				currentCount := sitesChecked
 				sitesCheckedMutex.Unlock()
-
-				// Report progress
 				tools.NotifyProgress(currentCount)
 			}
 		}()
 	}
 
-	// Send Sherlock jobs
 	go func() {
 		for siteName, site := range sites.SherlockSites {
 			jobs <- types.SherlockJob{
@@ -49,21 +43,16 @@ func RunSherlockDatabase(username string, config types.Config) int {
 		close(jobs)
 	}()
 
-	// Wait and close results
 	go func() {
 		wg.Wait()
 		close(results)
 	}()
-
-	// Collect and print results
+	
 	foundCount := 0
 	for result := range results {
 		if result.Status == "FOUND" {
 			foundCount++
-			// First notify any registered callback
 			handled := tools.NotifyFound(result.Name, result.URL)
-
-			// Only print if not handled by a callback
 			if !handled {
 				tools.Green("Found: ")
 				fmt.Print(result.Name, " at ")

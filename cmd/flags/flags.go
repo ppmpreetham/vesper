@@ -8,9 +8,7 @@ import (
 	"github.com/ppmpreetham/vesper/tools"
 )
 
-// Parse parses command-line flags and returns the configuration
 func Parse() (types.Config, string, bool) {
-	// Default configuration
 	config := types.Config{
 		Database:   "",
 		Timeout:    7,
@@ -31,7 +29,7 @@ func Parse() (types.Config, string, bool) {
 	timeoutFlag := flag.Int("timeout", 7, "HTTP request timeout in seconds (default: 7)")
 	flag.IntVar(timeoutFlag, "t", 7, "HTTP request timeout in seconds (default: 7)")
 
-	// Define usage
+	// usage
 	flag.Usage = func() {
 		fmt.Println("Usage: vesper <username> [options] or vesper --tui")
 		fmt.Println("Options:")
@@ -43,10 +41,9 @@ func Parse() (types.Config, string, bool) {
 		fmt.Println("\nList of databases:\n\t- whatsmyname (default)\n\t- sherlock\n\t- maigret\n\t- all")
 	}
 
-	// Parse flags
 	flag.Parse()
 
-	// Check for help and version flags
+	// help and version flags check
 	if *helpFlag {
 		flag.Usage()
 		return config, "", true

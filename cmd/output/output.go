@@ -7,7 +7,6 @@ import (
 	"github.com/ppmpreetham/vesper/pkg/types"
 )
 
-// PrintSummary prints a summary of the results
 func PrintSummary(results []types.JobResult, elapsedTime time.Duration) {
 	if len(results) == 0 {
 		return

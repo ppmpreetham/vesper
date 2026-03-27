@@ -7,7 +7,6 @@ import (
 	"github.com/ppmpreetham/vesper/tools"
 )
 
-// RunEnumeration runs the enumeration against the specified databases
 func RunEnumeration(username string, config types.Config) []types.JobResult {
 	fmt.Printf("Starting enumeration for username: %s (timeout: %ds)\n", tools.OrangeString(username), config.Timeout)
 
@@ -24,11 +23,11 @@ func RunEnumeration(username string, config types.Config) []types.JobResult {
 		count := RunMaigretDatabase(username, config)
 		results = append(results, types.JobResult{DatabaseName: "Maigret", FoundCount: count})
 
-	case "all": // New option to run all databases
+	case "all": 
 		fmt.Println("Using all databases for enumeration...")
 		results = RunAllDatabases(username, config)
 
-	case "whatsmyname", "": // Default case - run only WhatsMyName
+	case "whatsmyname", "": // default
 		fmt.Println("Using WhatsMyName database for enumeration...")
 		count := RunWhatsMyNameDatabase(username, config)
 		results = append(results, types.JobResult{DatabaseName: "WhatsMyName", FoundCount: count})
@@ -41,11 +40,10 @@ func RunEnumeration(username string, config types.Config) []types.JobResult {
 	return results
 }
 
-// RunAllDatabases runs enumeration against all available databases
 func RunAllDatabases(username string, config types.Config) []types.JobResult {
 	var results []types.JobResult
 
-	// Run Sherlock database first
+	// Sherlock first
 	fmt.Print("\n=== Starting ")
 	tools.BoldOrange("Sherlock")
 	fmt.Println(" database enumeration ===")
@@ -54,7 +52,7 @@ func RunAllDatabases(username string, config types.Config) []types.JobResult {
 	fmt.Printf("Sherlock database completed - Found %d matches\n", sherlockCount)
 	results = append(results, types.JobResult{DatabaseName: "Sherlock", FoundCount: sherlockCount})
 
-	// Run WhatsMyName database second
+	// WhatsMyName second
 	fmt.Print("\n=== Starting ")
 	tools.BoldOrange("WhatsMyName")
 	fmt.Println(" database enumeration ===")
@@ -63,7 +61,7 @@ func RunAllDatabases(username string, config types.Config) []types.JobResult {
 	fmt.Printf("WhatsMyName database completed - Found %d matches\n", wmnCount)
 	results = append(results, types.JobResult{DatabaseName: "WhatsMyName", FoundCount: wmnCount})
 
-	// Run Maigret database third
+	// Maigret third
 	fmt.Print("\n=== Starting ")
 	tools.BoldOrange("Maigret")
 	fmt.Println(" database enumeration ===")

@@ -6,7 +6,6 @@ import (
 	"github.com/fatih/color"
 )
 
-// PrintLogo prints the logo to the console.
 func PrintLogo() {
 	logo := `
      $$$$ $$$$  $$$$$$$$$  $$$$$$$$$d  $$$$$$$$$  $$$$$$$$$$  $$$$$$$$$
